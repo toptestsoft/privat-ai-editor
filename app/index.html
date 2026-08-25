@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Приватный ИИ-редактор текста</title>
+<style>
+  :root {
+    --bg: #0e1411;
+    --panel: #16201a;
+    --border: #2a3a2f;
+    --text: #d6e4db;
+    --muted: #7e9a87;
+    --accent: #4ade80;
+    --accent-2: #2dd4bf;
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+  }
+  header {
+    padding: 24px 20px 12px; border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+    color: var(--accent); background: #14241a; border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 999px; margin: 10px auto 0;
+  }
+  .badge::before { content: "🔒"; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; align-items: center; }
+  select, button, textarea, input {
+    font-family: inherit; font-size: 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    padding: 9px 12px;
+  }
+  textarea { width: 100%; min-height: 200px; resize: vertical; }
+  label { font-size: 13px; color: var(--muted); }
+  .mode { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .mode button { cursor: pointer; }
+  .mode button.active { background: var(--accent); color: #07120b; border-color: var(--accent); font-weight: 600; }
+  .endpoint { width: 280px; }
+  .run { background: var(--accent); color: #07120b; font-weight: 600; cursor: pointer; border: none; }
+  .run:disabled { opacity: .5; cursor: not-allowed; }
+  .out { margin-top: 16px; }
+  .out textarea { min-height: 180px; background: #111a14; }
+  .status { font-size: 13px; color: var(--muted); min-height: 20px; margin: 8px 0; }
+  .status.err { color: var(--danger); }
+  .status.ok { color: var(--accent); }
+  .pay { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
+  .pay a {
+    display: inline-block; margin: 6px; padding: 10px 18px; border-radius: 8px;
+    text-decoration: none; font-weight: 600; border: 1px solid var(--border);
+  }
+  .pay .boosty { background: #f5793b; color: #fff; border-color: #f5793b; }
+  .pay .donate { background: #ff4d6d; color: #fff; border-color: #ff4d6d; }
+  .pay .profiles { margin-top: 10px; }
+  .pay .profiles a { background: transparent; color: var(--muted); font-weight: 400; font-size: 13px; padding: 4px 12px; }
+  .pay .profiles a:hover { color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Приватный ИИ-редактор текста</h1>
+  <p>Сокращай, перефразируй и выделяй главное — без отправки данных в облако</p>
+  <div class="badge">Текст остаётся на твоём устройстве</div>
+</header>
+
+<div class="wrap">
+  <div class="mode">
+    <button id="m-lmstudio" class="active">Мой LM Studio (локально)</button>
+    <button id="m-browser">Браузерная модель (WebGPU)</button>
+  </div>
+
+  <div id="lmsettings">
+    <label>Эндпоинт LM Studio:</label>
+    <input id="endpoint" class="endpoint" value="http://localhost:1234/v1" />
+    <label for="model">Модель:</label>
+    <input id="model" class="endpoint" value="gemma-4-e4b-it" />
+    <div class="hint">В LM Studio включи Server и разреши CORS (Server Settings → CORS), загрузи модель (лучше не-thinking, напр. gemma-4-e4b-it). Для qwen3.x thinking-моделей размышления отключаются автоматически.</div>
+  </div>
+
+  <div class="controls">
+    <label for="action">Действие:</label>
+    <select id="action">
+      <option value="summarize">Сократить текст</option>
+      <option value="rewrite">Перефразировать</option>
+      <option value="keypoints">Выделить ключевое</option>
+      <option value="translate">Перевести на русский</option>
+    </select>
+    <button class="run" id="run">▶ Запустить</button>
+  </div>
+
+  <textarea id="input" placeholder="Вставь сюда текст, с которым нужно поработать..."></textarea>
+
+  <div class="status" id="status"></div>
+
+  <div class="out">
+    <label for="output">Результат:</label>
+    <textarea id="output" readonly placeholder="Здесь появится результат..."></textarea>
+  </div>
+
+  <div class="pay">
+    <div>Понравился инструмент? Поддержи развитие:</div>
+    <a class="boosty" href="https://boosty.to/toptestsoft" target="_blank" rel="noopener">Boosty</a>
+    <a class="donate" href="https://dalink.to/toptestsoft" target="_blank" rel="noopener">Dalink (донат)</a>
+    <div class="profiles">
+      <a href="https://github.com/toptestsoft" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/toptestsoft" target="_blank" rel="noopener">Hugging Face</a>
+    </div>
+    <div class="hint">Ссылки подставлены под ник toptestsoft.</div>
+  </div>
+</div>
+
+<footer>Работает приватно. Исходный код открыт. Сделано с локальными ИИ-моделями.</footer>
+
+<script type="module">
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $('status');
+  const setStatus = (msg, cls = '') => { statusEl.textContent = msg; statusEl.className = 'status ' + cls; };
+
+  // --- Режимы ---
+  let mode = 'lmstudio';
+  $('m-lmstudio').onclick = () => { mode = 'lmstudio'; $('m-lmstudio').classList.add('active'); $('m-browser').classList.remove('active'); $('lmsettings').style.display = ''; };
+  $('m-browser').onclick  = () => { mode = 'browser';  $('m-browser').classList.add('active');  $('m-lmstudio').classList.remove('active'); $('lmsettings').style.display = 'none'; };
+
+  const PROMPTS = {
+    summarize: 'Сократи следующий текст, сохранив ключевой смысл. Ответь только сжатым текстом на том же языке:',
+    rewrite:   'Перефразируй следующий текст понятнее и естественнее, сохранив смысл. Ответь только переработанным текстом:',
+    keypoints: 'Выдели из текста 5–8 ключевых пунктов списком. Отвечай на том же языке, что и текст:',
+    translate: 'Переведи следующий текст на русский язык. Ответь только переводом:'
+  };
+
+  // --- Режим LM Studio (OpenAI-совместимый API) ---
+  async function runLMStudio(text, action) {
+    const base = $('endpoint').value.replace(/\/+$/, '');
+    const model = $('model').value.trim() || 'local-model';
+    // qwen3.x — thinking-модели: отключаем размышления, иначе контент пустой
+    const isThinking = /qwen3/i.test(model);
+    const body = {
+      model,
+      messages: [
+        { role: 'system', content: 'Ты — полезный редактор текста. Отвечай кратко, без лишних пояснений.' },
+        { role: 'user', content: PROMPTS[action] + '\n\n' + text }
+      ],
+      temperature: 0.3,
+      max_tokens: 1500
+    };
+    if (isThinking) body.chat_template_kwargs = { enable_thinking: false };
+    const res = await fetch(base + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('LM Studio вернул ' + res.status + '. Проверь, что сервер запущен и включён CORS.');
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content?.trim() || '';
+    if (!content) throw new Error('Модель вернула пустой ответ (вероятно, thinking-модель типа qwen3.x слишком медленная). Переключи модель на gemma-4-e4b-it или другую не-thinking.');
+    return content;
+  }
+
+  // --- Режим браузерной модели (transformers.js: проверяем WebGPU, иначе CPU) ---
+  let browserPipe = null;
+  let browserDevice = null;
+  async function pickBrowserDevice() {
+    // Реально проверяем, даст ли браузер WebGPU-адаптер (не только наличие navigator.gpu)
+    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (adapter) return 'webgpu';
+      } catch (_) { /* нет адаптера */ }
+    }
+    return 'wasm';
+  }
+  async function runBrowser(text, action) {
+    if (!browserDevice) {
+      browserDevice = await pickBrowserDevice();
+      if (browserDevice === 'webgpu') {
+        setStatus('WebGPU доступен — загружаю модель (первый запуск ~0.5GB, медленно)...');
+      } else {
+        setStatus('WebGPU недоступен — загружаю модель в режиме CPU (медленнее, но работает в любом браузере)...');
+      }
+      const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers');
+      try {
+        browserPipe = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', { device: browserDevice });
+      } catch (e) {
+        if (browserDevice === 'webgpu') {
+          setStatus('WebGPU не сработал (' + e.message + ') — переключаюсь на CPU...');
+          browserDevice = 'wasm';
+          browserPipe = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', { device: 'wasm' });
+        } else {
+          throw e;
+        }
+      }
+    }
+    setStatus('Генерирую...');
+    const prompt = PROMPTS[action] + '\n\n' + text;
+    const out = await browserPipe(prompt, { max_new_tokens: 400, do_sample: false });
+    return out[0]?.generated_text?.at(-1)?.content || out[0]?.generated_text || '';
+  }
+
+  $('run').onclick = async () => {
+    const text = $('input').value.trim();
+    if (!text) { setStatus('Введи текст для обработки.', 'err'); return; }
+    const action = $('action').value;
+    $('run').disabled = true; $('output').value = '';
+    setStatus('Обрабатываю...');
+    try {
+      const result = mode === 'lmstudio' ? await runLMStudio(text, action) : await runBrowser(text, action);
+      $('output').value = result;
+      setStatus('Готово ✔', 'ok');
+    } catch (e) {
+      setStatus('Ошибка: ' + e.message, 'err');
+    } finally {
+      $('run').disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

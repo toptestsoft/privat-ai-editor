@@ -7,6 +7,9 @@
 - **Мой LM Studio** — работает на твоём компьютере через [LM Studio](https://lmstudio.ai)
   (локальный сервер `http://localhost:1234`). Быстро, приватно, без подписок.
   Рекомендуемая модель: `gemma-4-e4b-it` (не-thinking, отвечает по-русски).
+  Работает **любой OpenAI-совместимый локальный сервер** — LM Studio, Ollama
+  (`http://localhost:11434/v1`), llama.cpp, vLLM, KoboldCpp, text-generation-webui:
+  просто поменяй адрес эндпоинта в поле выше.
 - **Браузерная модель** — запускает Qwen2.5-0.5B прямо в браузере через transformers.js
   (WebGPU, либо CPU-фолбэк). Работает у любого посетителя, даже без LM Studio.
 

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Приватный ИИ-редактор текста</title>
+<meta name="description" content="Сокращай, перефразируй, анонимизируй — без отправки данных в облако. Работает прямо в браузере, офлайн.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+<style>
+:root{--bg:#0f1218;--card:#181d26;--card2:#1f2530;--tx:#e8ecf3;--mut:#8b94a7;--ac:#4da3ff;--ac2:#2b7cd6;--ok:#3ecf8e;--err:#ff6b6b;--warn:#ffc857;--bd:#2a3140}
+[data-theme="light"]{--bg:#f4f6fa;--card:#fff;--card2:#eef1f6;--tx:#1a2942;--mut:#5c6b84;--ac:#1273d4;--ac2:#0d5cad;--ok:#199d63;--err:#d64545;--warn:#b97f10;--bd:#d8dfeb}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);padding:20px}
+.wrap{max-width:960px;margin:0 auto}header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h1{font-size:24px;margin:0}.tag{color:var(--mut);margin:4px 0 0}.badge{color:var(--ok);font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin:14px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+label{color:var(--mut);font-size:13px}
+input,select,textarea{background:var(--card2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font:inherit;width:100%}
+textarea{min-height:140px;resize:vertical;overflow:hidden}
+button{background:var(--ac);border:none;color:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font:inherit}
+button:hover{background:var(--ac2)}button.sec{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:8px}.tabs button{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.meta{color:var(--mut);font-size:12px;margin:4px 0}
+.note{font-size:12px;color:var(--mut);background:var(--card2);border-radius:8px;padding:8px 10px}
+.drop{border:2px dashed var(--bd);border-radius:10px;padding:14px;text-align:center;color:var(--mut);cursor:pointer;margin:10px 0}
+.drop.on{border-color:var(--ac);color:var(--ac)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}
+#histPanel{max-height:260px;overflow:auto}
+.hitem{padding:8px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:13px}
+.hitem:hover{background:var(--card2)}.hitem .t{color:var(--mut);font-size:11px}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.on{display:flex}.mbox{background:var(--card);border:1px solid var(--bd);border-radius:12px;max-width:900px;width:100%;max-height:85vh;overflow:auto;padding:16px}
+pre.diff{white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace}
+.diff .del{background:#ff6b6b2e;color:var(--err);display:block}.diff .add{background:#3ecf8e2e;color:var(--ok);display:block}.diff .eq{display:block;color:var(--mut)}
+footer{color:var(--mut);font-size:13px;text-align:center;margin:20px 0}footer a{color:var(--ac)}
+.status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin:10px 0;font-size:14px;min-height:42px;transition:all .3s}
+.status-bar.mut{background:var(--card2);color:var(--mut)}
+.status-bar.ok{background:#3ecf8e22;color:var(--ok);border:1px solid #3ecf8e55}
+.status-bar.err{background:#ff6b6b22;color:var(--err);border:1px solid #ff6b6b55}
+.status-bar.warn{background:#ffc85722;color:var(--warn);border:1px solid #ffc85755}
+.status-bar.info{background:#4da3ff22;color:var(--ac);border:1px solid #4da3ff55}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.conn-dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:6px}
+.conn-dot.on{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.conn-dot.off{background:var(--err)}
+.conn-dot.unknown{background:var(--mut)}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:10px}
+.model-card{background:var(--card2);border:1px solid var(--bd);border-radius:8px;padding:10px;cursor:pointer;transition:all .2s}
+.model-card:hover{border-color:var(--ac);transform:translateY(-1px)}
+.model-card.selected{border-color:var(--ac);background:#4da3ff15}
+.model-card .name{font-weight:600;font-size:13px;word-break:break-all}
+.model-card .desc{font-size:12px;color:var(--mut);margin-top:4px}
+.model-card .size{font-size:11px;color:var(--ac);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>🔒 Приватный ИИ-редактор текста</h1>
+    <p class="tag">Сокращай, перефразируй, анонимизируй — без отправки данных в облако</p>
+    <span class="badge">Текст остаётся на твоём устройстве</span>
+  </div>
+  <button class="sec" id="themeBtn">🌓 Тема</button>
+</header>
+
+<div class="status-bar mut" id="status">Готов к работе</div>
+
+<div class="card">
+  <div class="tabs">
+    <button id="tabWeb" class="on">🌐 Браузер (без установки)</button>
+    <button id="tabLM">🏠 Мой LM Studio (быстрее)</button>
+  </div>
+  <div id="webBox">
+    <label>Выбери модель (скачается один раз, потом работает офлайн):</label>
+    <div class="model-grid" id="modelGrid"></div>
+    <input type="hidden" id="webModel" value="onnx-community/Qwen2.5-0.5B-Instruct-ONNX">
+    <div class="note">Первая загрузка модели занимает 1–3 минуты (зависит от интернета). Дальше работает без интернета. Если WebGPU недоступен — автоматически используется CPU (медленнее).</div>
+  </div>
+  <div id="lmBox" class="hidden">
+    <div class="row">
+      <div style="flex:2;min-width:220px"><label>Эндпоинт LM Studio</label><input id="endpoint" value="http://127.0.0.1:1234/v1"></div>
+      <button class="sec" id="checkBtn"><span class="conn-dot unknown" id="connDot"></span>Проверить</button>
+    </div>
+    <div class="row">
+      <div style="flex:2;min-width:220px"><label>Модель</label><select id="model"><option value="">— нажми «📥 Загрузить список» —</option></select></div>
+      <button class="sec" id="fetchModels">📥 Загрузить список</button>
+    </div>
+    <div class="note">Нужен запущенный LM Studio с включённым Server и CORS. Для qwen3.x thinking-моделей размышления отключаются автоматически.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <div style="flex:2;min-width:200px"><label>Действие</label>
+      <select id="action">
+        <option value="shorten">✂️ Сократить текст</option>
+        <option value="rephrase">🔁 Перефразировать</option>
+        <option value="key">🎯 Выделить ключевое</option>
+        <option value="translate">🌍 Перевести</option>
+        <option value="anon">🕶 Анонимизировать</option>
+        <option value="grammar">✏️ Исправить грамматику и стиль</option>
+        <option value="tone_formal">💼 Тон: деловой</option>
+        <option value="tone_friend">😊 Тон: дружелюбный</option>
+        <option value="tone_simple">🧒 Тон: проще</option>
+        <option value="custom">⚙️ Свой промпт</option>
+      </select>
+    </div>
+    <div id="langBox" class="hidden" style="flex:1;min-width:140px"><label>Язык</label>
+      <select id="lang"><option>Русский</option><option>English</option><option>Deutsch</option><option>Français</option><option>Español</option><option>中文</option><option>日本語</option></select>
+    </div>
+    <div id="strBox" class="hidden" style="flex:1;min-width:140px"><label>Сила</label>
+      <select id="strength"><option value="light">Слегка (10–20%)</option><option value="half" selected>Вдвое</option><option value="max">Максимум (суть)</option></select>
+    </div>
+    <div style="flex:1;min-width:160px"><label>Креативность</label>
+      <select id="temp"><option value="0.1">Точный</option><option value="0.4" selected>Сбалансированный</option><option value="0.8">Креативный</option><option value="1.2">Максимум</option></select>
+    </div>
+  </div>
+  <div id="promptBox" class="hidden">
+    <label>Ваш промпт</label>
+    <textarea id="customPrompt" style="min-height:60px" placeholder="Что сделать с текстом..."></textarea>
+  </div>
+</div>
+
+<div class="drop" id="drop">📎 Перетащи файл .txt / .md сюда или кликни<input type="file" id="file" accept=".txt,.md,text/plain" class="hidden"></div>
+
+<div class="card">
+  <div class="row"><label>Исходный текст</label><button class="sec" id="clearSrc">🧹 Очистить</button></div>
+  <div class="meta" id="srcMeta">0 символов / ~0 токенов</div>
+  <textarea id="src" placeholder="Вставь или перетащи текст..."></textarea>
+</div>
+
+<div class="card">
+  <label>Результат</label>
+  <div class="meta" id="resMeta"></div>
+  <textarea id="res" placeholder="Здесь появится результат..."></textarea>
+  <div class="btns" style="margin-top:10px">
+    <button class="sec" id="copyBtn">📋 Копировать</button>
+    <button class="sec" id="toSrcBtn">➡️ В исходный</button>
+    <button class="sec" id="txtBtn">💾 .txt</button>
+    <button class="sec" id="mdBtn">📝 .md</button>
+    <button class="sec" id="cmpBtn">🔍 Сравнить</button>
+  </div>
+</div>
+
+<div class="row">
+  <button id="runBtn">▶ Запустить (Ctrl+Enter)</button>
+  <button class="sec" id="stopBtn" disabled>⏹ Стоп</button>
+  <button class="sec" id="histBtn">🕘 История</button>
+</div>
+<progress id="prog" max="100" value="0" style="width:100%;height:8px;display:none"></progress>
+
+<div class="card hidden" id="histPanel">
+  <div class="row"><b>История (последние 20, локально)</b><button class="sec" id="clearHist">🗑 Очистить историю</button></div>
+  <div id="histList"></div>
+</div>
+
+<footer>
+  v4.0 · Понравился инструмент? Поддержи:<br>
+  <a href="https://boosty.to/toptestsoft" target="_blank">Boosty</a> · <a href="https://dalink.to/toptestsoft" target="_blank">Dalink</a> · <a href="https://github.com/toptestsoft" target="_blank">GitHub</a> · <a href="https://huggingface.co/toptestsoft" target="_blank">HF</a>
+</footer>
+</div>
+
+<div class="modal" id="cmpModal"><div class="mbox"><div class="row"><b>🔍 Сравнение</b><button class="sec" id="cmpClose">✖ Закрыть</button></div><pre class="diff" id="diffOut"></pre></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const LS={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v!==null&&v!==undefined?v:d}catch{return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+let mode='web',abort=null,webPipe=null,webPipeId='',stopFlag=false;
+
+/* --- публичные модели (без регистрации) --- */
+const WEB_MODELS=[
+ {id:'onnx-community/Qwen2.5-0.5B-Instruct-ONNX',name:'Qwen 2.5 0.5B',desc:'Самая маленькая, быстрый старт',size:'~1 ГБ',rec:true},
+ {id:'onnx-community/Falcon-H1-Tiny-90M-Instruct-ONNX',name:'Falcon H1 Tiny',desc:'Моментальный старт, для тестов',size:'~200 МБ'},
+ {id:'onnx-community/granite-4.0-350m-ONNX-web',name:'Granite 4.0 350M',desc:'Быстрая и умная',size:'~700 МБ'},
+ {id:'onnx-community/LFM2.5-350M-ONNX',name:'LFM2.5 350M',desc:'Компактная от Liquid AI',size:'~700 МБ'},
+ {id:'onnx-community/Llama-3.2-1B-Instruct-ONNX',name:'Llama 3.2 1B',desc:'От Meta, лёгкая',size:'~2.5 ГБ'}
+];
+
+/* --- настройки --- */
+const S=LS.get('pie_s',{endpoint:'http://127.0.0.1:1234/v1',model:'',webModel:'onnx-community/Qwen2.5-0.5B-Instruct-ONNX',action:'shorten',lang:'Русский',temp:'0.4',strength:'half',theme:'dark',customPrompt:''});
+$('endpoint').value=S.endpoint;$('webModel').value=S.webModel;$('action').value=S.action;$('lang').value=S.lang;$('temp').value=S.temp;$('strength').value=S.strength;
+if(S.customPrompt)$('customPrompt').value=S.customPrompt;
+if(S.model)$('model').innerHTML=`<option value="${S.model}" selected>${S.model}</option>`;
+document.documentElement.dataset.theme=S.theme;
+if(S.mode){mode=S.mode;if(mode==='lm')$('tabLM').click()}
+const save=()=>{S.endpoint=$('endpoint').value;S.model=$('model').value;S.webModel=$('webModel').value;S.action=$('action').value;S.lang=$('lang').value;S.temp=$('temp').value;S.strength=$('strength').value;S.customPrompt=$('customPrompt').value;S.mode=mode;LS.set('pie_s',S)};
+document.querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('change',save));
+
+function status(t,cls='mut',spin=false){const el=$('status');el.className='status-bar '+cls;el.innerHTML=(spin?'<span class="spinner"></span> ':'')+t}
+
+$('themeBtn').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=S.theme;LS.set('pie_s',S)};
+$('tabWeb').onclick=()=>{mode='web';$('tabWeb').classList.add('on');$('tabLM').classList.remove('on');$('webBox').classList.remove('hidden');$('lmBox').classList.add('hidden');save()};
+$('tabLM').onclick=()=>{mode='lm';$('tabLM').classList.add('on');$('tabWeb').classList.remove('on');$('lmBox').classList.remove('hidden');$('webBox').classList.add('hidden');save()};
+
+const drawWebModels=()=>{const cur=$('webModel').value;
+ $('modelGrid').innerHTML=WEB_MODELS.map(m=>`
+  <div class="model-card ${cur===m.id?'selected':''}" data-id="${m.id}">
+   <div class="name">${m.name}${m.rec?' ⭐':''}</div>
+   <div class="desc">${m.desc}</div><div class="size">${m.size}</div></div>`).join('');};
+drawWebModels();
+$('modelGrid').onclick=e=>{const c=e.target.closest('.model-card');if(!c)return;
+ const id=c.dataset.id;$('webModel').value=id;save();drawWebModels();
+ if(webPipe&&webPipeId!==id){webPipe=null;webPipeId=''}
+ status(`Выбрана: ${id}`,'ok');setTimeout(()=>status('Готов к работе','mut'),2000);};
+
+const syncUI=()=>{const a=$('action').value;
+ $('langBox').classList.toggle('hidden',a!=='translate');
+ $('strBox').classList.toggle('hidden',a!=='shorten');
+ $('promptBox').classList.toggle('hidden',a!=='custom')};
+$('action').onchange=()=>{syncUI();save()};syncUI();
+
+const STR={light:'слегка (на 10–20%)',half:'примерно вдвое',max:'максимально, оставив только суть'};
+const PROMPTS={
+ shorten:s=>`Сократи текст ${STR[s]}. Сохрани смысл и структуру. Верни ТОЛЬКО сокращённый текст.`,
+ rephrase:()=>`Перефразируй текст, сохранив смысл и тон. Верни ТОЛЬКО новый текст.`,
+ key:()=>`Выдели ключевые моменты маркированным списком. Верни ТОЛЬКО список.`,
+ translate:s=>`Переведи текст на: ${s.lang}. Верни ТОЛЬКО перевод.`,
+ anon:()=>`Анонимизируй: замени имена, телефоны, email, адреса, ИНН, счета, компании на [ИМЯ], [ТЕЛЕФОН], [EMAIL], [АДРЕС], [КОМПАНИЯ]. Верни ТОЛЬКО результат.`,
+ grammar:()=>`Исправь грамматику, пунктуацию и стиль, не меняя смысл. Верни ТОЛЬКО исправленный текст.`,
+ tone_formal:()=>`Перепиши в деловом стиле. Верни ТОЛЬКО результат.`,
+ tone_friend:()=>`Перепиши в дружелюбном стиле. Верни ТОЛЬКО результат.`,
+ tone_simple:()=>`Перепиши максимально просто. Верни ТОЛЬКО результат.`
+};
+
+const toks=t=>Math.ceil(t.length/3.5);
+const updSrc=()=>{$('srcMeta').textContent=`${$('src').value.length} символов / ~${toks($('src').value)} токенов`};
+$('src').addEventListener('input',updSrc);
+$('clearSrc').onclick=()=>{$('src').value='';updSrc();$('src').focus();status('','mut')};
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+$('src').addEventListener('input',()=>autoResize($('src')));
+$('res').addEventListener('input',()=>autoResize($('res')));
+
+async function checkConn(auto=false){
+ status('Проверяю LM Studio...','info',true);
+ $('connDot').className='conn-dot unknown';
+ try{
+  const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),5000);
+  const r=await fetch(base()+'/models',{signal:ctrl.signal});clearTimeout(tm);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  $('connDot').className='conn-dot on';
+  status(`✅ LM Studio подключён: ${j.data.length} моделей`,'ok');
+  if(!auto)setTimeout(()=>status('Готов к работе','mut'),4000);
+ }catch(e){
+  $('connDot').className='conn-dot off';
+  const msg=e.name==='AbortError'?'таймаут — сервер не отвечает':(e.message||String(e));
+  status(`LM Studio не отвечает (${msg}). Включи Server и CORS.`,'warn');
+ }
+}
+$('checkBtn').onclick=()=>checkConn(false);
+
+$('fetchModels').onclick=async()=>{
+ status('Загружаю список моделей...','info',true);
+ try{
+  const r=await fetch(base()+'/models');if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();if(!j.data.length){status('Сервер отвечает, но модели не загружены','warn');return}
+  $('model').innerHTML=j.data.map(m=>`<option value="${m.id}">${m.id}</option>`).join('');
+  if(S.model&&j.data.some(m=>m.id===S.model))$('model').value=S.model;
+  $('connDot').className='conn-dot on';save();
+  status(`📥 Загружено ${j.data.length} моделей`,'ok');setTimeout(()=>status('Готов к работе','mut'),4000);
+ }catch(e){status('Не удалось: '+(e.message||String(e)),'err')}
+};
+
+const base=()=>{let e=$('endpoint').value.trim().replace(/\/+$/,'');if(!e.endsWith('/v1'))e+='/v1';return e};
+
+const readFile=f=>{if(!f)return;if(!(f.type.startsWith('text/')||f.name.endsWith('.md'))){status('⚠️ Поддерживаются только .txt и .md','warn');return}
+ const r=new FileReader();r.onload=()=>{$('src').value=r.result;updSrc();autoResize($('src'))};r.readAsText(f)};
+$('drop').onclick=()=>$('file').click();$('file').onchange=e=>readFile(e.target.files[0]);
+['dragover','dragenter'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('on')}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('on')}));
+$('drop').addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)readFile(f)});
+
+const buildInstr=()=>{const a=$('action').value;const s={lang:$('lang').value,strength:$('strength').value};
+ return a==='custom'?$('customPrompt').value.trim():PROMPTS[a](s)};
+
+async function runLM(instr,src){
+ abort=new AbortController();
+ const body={model:$('model').value||undefined,messages:[{role:'user',content:instr+'\n\n'+src}],temperature:parseFloat($('temp').value),stream:true,chat_template_kwargs:{enable_thinking:false}};
+ const r=await fetch(base()+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:abort.signal});
+ if(!r.ok)throw new Error('LM Studio: HTTP '+r.status);
+ const reader=r.body.getReader(),dec=new TextDecoder();let buf='',out='';
+ while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});
+  let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);
+   if(line.startsWith('data:')){const d=line.slice(5).trim();if(d==='[DONE]')continue;
+    try{const j=JSON.parse(d);const t=j.choices?.[0]?.delta?.content||'';if(t){out+=t;$('res').value=out;autoResize($('res'))}}catch{}}}}
+ return out;
+}
+
+async function runWeb(instr,src){
+ status('Подключаю библиотеку...','info',true);
+ const tf=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6');
+ const id=$('webModel').value;
+ if(!webPipe||webPipeId!==id){
+  $('prog').style.display='';
+  let device='webgpu';let lastErr;
+  try{
+   webPipe=await tf.pipeline('text-generation',id,{device:'webgpu',progress_callback:e=>{
+    if(e.status==='progress'&&e.total){$('prog').value=Math.round(e.progress);status(`Скачиваю ${e.file||''} — ${Math.round(e.progress)}%`,'info',true)}
+    else if(e.status==='initiate'){status(`Начинаю ${e.file||''}...`,'info',true)}
+    else if(e.status==='ready'){status('Загружена, инициализирую...','info',true)}
+   }});
+  }catch(err){
+   lastErr=err;$('prog').style.display='none';
+   if(err.message&&err.message.includes('401'))throw new Error('Модель требует авторизации. Выбери другую из списка (рекомендуется Qwen 2.5 0.5B ⭐)');
+   if(err.message&&err.message.includes('404'))throw new Error('Модель недоступна. Выбери другую из списка');
+   status('⚠️ WebGPU недоступен, переключаюсь на CPU...','warn');
+   try{
+    webPipe=await tf.pipeline('text-generation',id,{device:'wasm',progress_callback:e=>{
+     if(e.status==='progress'&&e.total){$('prog').value=Math.round(e.progress);status(`Скачиваю CPU ${e.file||''} — ${Math.round(e.progress)}%`,'info',true)}
+    }});
+   }catch(err2){throw new Error('Не удалось загрузить модель: '+(lastErr.message||lastErr)+' / '+(err2.message||err2))}
+  }
+  webPipeId=id;$('prog').style.display='none';
+ }
+ status('Генерирую...','info',true);
+ stopFlag=false;let out='';
+ const streamer=new tf.TextStreamer(webPipe.tokenizer,{callback_function:t=>{if(stopFlag)throw new Error('Stopped');out+=t;$('res').value=out;autoResize($('res'))},skip_special_tokens:true,skip_prompt:true});
+ await webPipe(instr+'\n\n'+src,{max_new_tokens:1024,temperature:parseFloat($('temp').value),do_sample:true,streamer});
+ return out;
+}
+
+async function run(){
+ const src=$('src').value.trim();
+ if(!src){status('⚠️ Вставь текст','warn');return}
+ if(mode==='lm'&&!$('model').value){status('⚠️ Выбери модель (📥 Загрузить список)','warn');return}
+ const a=$('action').value;
+ if(a==='custom'&&!$('customPrompt').value.trim()){status('⚠️ Введи свой промпт','warn');return}
+ if(src.length>15000){status('⚠️ Текст очень длинный — модель может обрезать ответ','warn');}
+ $('runBtn').disabled=true;$('stopBtn').disabled=false;$('res').value='';
+ status('Генерирую...','info',true);const t0=Date.now();
+ try{
+  const instr=buildInstr();
+  const out=mode==='lm'?await runLM(instr,src):await runWeb(instr,src);
+  $('res').value=out;
+  const d=Math.round((1-out.length/src.length)*100);
+  $('resMeta').textContent=`${out.length} символов / ~${toks(out)} токенов · ${d>=0?'−':'+'}${Math.abs(d)}% · ${((Date.now()-t0)/1000)|0} с`;
+  status('✅ Готово','ok');pushHist($('action').value,src,out);
+  setTimeout(()=>status('Готов к работе','mut'),4000);
+ }catch(e){
+  if(e.message==='Stopped'||e.name==='AbortError')status('⏹ Остановлено','warn');
+  else status('❌ '+(e.message||String(e)),'err');
+ }finally{$('runBtn').disabled=false;$('stopBtn').disabled=true;abort=null;stopFlag=false;$('prog').style.display='none'}
+}
+$('runBtn').onclick=run;
+$('stopBtn').onclick=()=>{if(mode==='lm'&&abort)abort.abort();else if(mode==='web')stopFlag=true};
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')run()});
+
+$('copyBtn').onclick=async()=>{try{await navigator.clipboard.writeText($('res').value);status('📋 Скопировано','ok');setTimeout(()=>status('Готов к работе','mut'),2000)}catch{status('❌ Не удалось скопировать','err')}};
+$('toSrcBtn').onclick=()=>{$('src').value=$('res').value;updSrc();autoResize($('src'));status('➡️ Подставлено — можно запускать следующее действие','ok');setTimeout(()=>status('Готов к работе','mut'),3000)};
+const dl=(name,mime)=>{const b=new Blob([$('res').value],{type:mime});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()};
+$('txtBtn').onclick=()=>dl('result.txt','text/plain');$('mdBtn').onclick=()=>dl('result.md','text/markdown');
+
+function lineDiff(a,b){const al=a.split('\n'),bl=b.split('\n');if(al.length+bl.length>600)return null;
+ const n=al.length,m=bl.length,dp=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=al[i]===bl[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+ const o=[];let i=0,j=0;while(i<n&&j<m){if(al[i]===bl[j]){o.push(['eq',al[i]]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1]){o.push(['del',al[i]]);i++}else{o.push(['add',bl[j]]);j++}}
+ while(i<n)o.push(['del',al[i++]]);while(j<m)o.push(['add',bl[j++]]);return o}
+$('cmpBtn').onclick=()=>{const d=lineDiff($('src').value,$('res').value);
+ $('diffOut').innerHTML=d?d.map(([t,s])=>`<span class="${t}">${(t==='del'?'− ':t==='add'?'+ ':'  ')+s.replace(/</g,'&lt;')}</span>`).join('')
+ :`<span class="del">${$('src').value.replace(/</g,'&lt;')}</span>\n<span class="add">${$('res').value.replace(/</g,'&lt;')}</span>`;
+ $('cmpModal').classList.add('on')};
+$('cmpClose').onclick=()=>$('cmpModal').classList.remove('on');
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('cmpModal').classList.remove('on')});
+
+let hist=LS.get('pie_h',[]);if(!Array.isArray(hist))hist=[];
+const drawHist=()=>{$('histList').innerHTML=hist.map((h,i)=>`<div class="hitem" data-i="${i}"><span class="t">${new Date(h.t).toLocaleString()} · ${h.a}</span><br>${h.r.slice(0,80).replace(/</g,'&lt;')}…</div>`).join('')||'<div class="hitem">Пока пусто</div>'};
+function pushHist(a,s,r){hist.unshift({t:Date.now(),a,s,r});hist=hist.slice(0,20);LS.set('pie_h',hist);drawHist()}
+$('histBtn').onclick=()=>{$('histPanel').classList.toggle('hidden');drawHist()};
+$('clearHist').onclick=()=>{if(!confirm('Удалить всю историю?'))return;hist=[];LS.set('pie_h',hist);drawHist();status('🗑 Очищено','ok');setTimeout(()=>status('Готов к работе','mut'),2000)};
+$('histList').onclick=e=>{const el=e.target.closest('.hitem');if(!el||el.dataset.i===undefined)return;const h=hist[+el.dataset.i];$('src').value=h.s;$('res').value=h.r;updSrc();autoResize($('src'));autoResize($('res'));$('resMeta').textContent=`${h.r.length} символов (из истории)`};
+drawHist();updSrc();
+</script>
+</body>
+</html>

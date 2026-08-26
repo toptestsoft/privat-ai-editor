@@ -4,3 +4,5 @@ app/package-lock.json
 app/package.json
 *.mjs
 __pycache__/
+# секретный токен бота (НЕ в репозиторий!)
+.token

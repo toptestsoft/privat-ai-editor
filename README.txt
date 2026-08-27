@@ -1,4 +1,5 @@
 Приватный ИИ-редактор текста: сокращение, перефраз, анонимизация на локальных моделях (LM Studio / браузер). Без отправки данных в облако.
+Private AI text editor: summarize, rephrase, anonymize via local models (LM Studio / browser). No data sent to cloud.
 
 🔒 Приватный ИИ-редактор текста (v4.2)
 Быстрый старт:

@@ -199,7 +199,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;margin:20px 0}footer a{
 
 <footer>
   <span data-i18n="footer">v4.3 · Понравился инструмент? Поддержи:</span><br>
-  <a href="https://boosty.to/toptestsoft" target="_blank">Boosty</a> · <a href="https://dalink.to/toptestsoft" target="_blank">Dalink</a> · <a href="https://github.com/toptestsoft" target="_blank">GitHub</a> · <a href="https://huggingface.co/toptestsoft" target="_blank">HF</a>
+  <a href="https://boosty.to/toptestsoft" target="_blank" rel="noopener noreferrer">Boosty</a> · <a href="https://dalink.to/toptestsoft" target="_blank" rel="noopener noreferrer">Dalink</a> · <a href="https://github.com/toptestsoft" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://huggingface.co/toptestsoft" target="_blank" rel="noopener noreferrer">HF</a>
 </footer>
 </div>
 
@@ -224,7 +224,6 @@ let mode='lm',abort=null,webPipe=null,webPipeId='',stopFlag=false;
 const WEB_MODELS=[
  {id:'onnx-community/Qwen2.5-0.5B-Instruct',name:'Qwen 2.5 0.5B ⭐',desc:'Лучший русский среди лёгких',size:'~1 ГБ',rec:true},
  {id:'onnx-community/Qwen3-0.6B-heretic-abliterated-uncensored-ONNX',name:'Qwen3 0.6B Heretic 🔓',desc:'Uncensored (abliterated), быстрая',size:'~0.6 ГБ'},
- {id:'d1g1mortal/Dolphin3.0-Qwen2.5-1.5B-ONNX',name:'Dolphin 3.0 1.5B 🔓',desc:'Классика uncensored, русский ок',size:'~1.2 ГБ'},
  {id:'onnx-community/Falcon-H1-Tiny-90M-Instruct-ONNX',name:'Falcon H1 Tiny 90M',desc:'Самая быстрая (англ., для теста)',size:'~1.1 ГБ'},
  {id:'onnx-community/LFM2.5-350M-ONNX',name:'LFM2.5 350M',desc:'Компактная от Liquid AI',size:'~700 МБ'},
  {id:'acidsound/LFM2.5-2.6B-Uncensored-ONNX',name:'LFM2.5 2.6B 🔓',desc:'Лучшее качество среди браузерных 🔓',size:'~2 ГБ'},
@@ -257,7 +256,6 @@ const I18N={
   btnRun:'▶ Запустить (Ctrl+Enter)',btnStop:'⏹ Стоп',btnHist:'🕘 История',
   lblHistory:'История (последние 20, локально)',btnExport:'💾 Экспорт',btnImport:'📂 Импорт',btnClearHist:'🗑 Очистить',
   footer:'v4.3 · Понравился инструмент? Поддержи:',lblDiff:'🔍 Сравнение',btnClose:'✖ Закрыть',
-  /* prompts */
   sysPrompt:'Ты — точный текстовый ассистент. Всегда следуй инструкции пользователя буквально. Отвечай только запрошенным результатом, без вступлений, пояснений, приветствий и меток.',
   promptShorten:s=>`Задача: сократить текст ${s}.\nТребования: сохранить смысл, убрать лишнее, вернуть ТОЛЬКО сокращённый текст без пояснений.`,
   promptRephrase:'Задача: перефразировать текст, сохранив смысл.\nТребования: другие слова, та же суть, вернуть ТОЛЬКО новый текст без пояснений.',
@@ -268,7 +266,6 @@ const I18N={
   promptFormal:'Задача: переписать текст в деловом стиле.\nТребования: официальный тон, вернуть ТОЛЬКО результат без пояснений.',
   promptFriend:'Задача: переписать текст в дружелюбном стиле.\nТребования: тёплый тон, вернуть ТОЛЬКО результат без пояснений.',
   promptSimple:'Задача: упростить текст.\nТребования: простые слова, короткие предложения, вернуть ТОЛЬКО результат без пояснений.',
-  /* statuses */
   stReady:'Готов к работе',stCheckLM:'Проверяю LM Studio...',stConnOK:'LM Studio подключён',stConnErr:'LM Studio не отвечает',
   stFetchModels:'Загружаю список моделей...',stModelsLoaded:'моделей загружено',stNoModels:'Сервер отвечает, но модели не загружены',
   stCheckGPU:'Проверяю WebGPU...',stGPUOK:'WebGPU доступен',stGPUOff:'WebGPU недоступен — будет CPU',
@@ -280,7 +277,6 @@ const I18N={
   stFileOnly:'Поддерживаются только .txt и .md',stEnterEndpoint:'Укажите эндпоинт LM Studio',
   stExample:'Пример подставлен — попробуй «Анонимизировать»',stSelected:'Выбрана',stLoadLib:'Загружаю библиотеку...',
   stWebGPUFail:'WebGPU не сработал, пробую CPU...',stDownloadStopped:'Загрузка прервана',stDownloadImpossible:'Загрузка невозможна из file://',
-  /* misc */
   srcPlaceholder:'Вставь текст, перетащи файл или нажми «Вставить пример»...',
   resPlaceholder:'Здесь появится результат...',customPlaceholder:'Что сделать с текстом...',
   labelText:'Текст',labelTokens:'токенов',labelChars:'символов',labelFromHistory:'из истории',
@@ -307,7 +303,6 @@ const I18N={
   btnRun:'▶ Run (Ctrl+Enter)',btnStop:'⏹ Stop',btnHist:'🕘 History',
   lblHistory:'History (last 20, local)',btnExport:'💾 Export',btnImport:'📂 Import',btnClearHist:'🗑 Clear',
   footer:'v4.3 · Like the tool? Support:',lblDiff:'🔍 Comparison',btnClose:'✖ Close',
-  /* prompts */
   sysPrompt:'You are a precise text assistant. Always follow the user instruction literally. Reply with only the requested result, no introductions, explanations, greetings or labels.',
   promptShorten:s=>`Task: shorten the text ${s}.\nRequirements: keep the meaning, remove fluff, return ONLY the shortened text with no explanations.`,
   promptRephrase:'Task: rephrase the text while keeping the meaning.\nRequirements: different words, same essence, return ONLY the new text with no explanations.',
@@ -318,7 +313,6 @@ const I18N={
   promptFormal:'Task: rewrite the text in a formal tone.\nRequirements: official tone, return ONLY the result with no explanations.',
   promptFriend:'Task: rewrite the text in a friendly tone.\nRequirements: warm tone, return ONLY the result with no explanations.',
   promptSimple:'Task: simplify the text.\nRequirements: simple words, short sentences, return ONLY the result with no explanations.',
-  /* statuses */
   stReady:'Ready',stCheckLM:'Checking LM Studio...',stConnOK:'LM Studio connected',stConnErr:'LM Studio not responding',
   stFetchModels:'Loading model list...',stModelsLoaded:'models loaded',stNoModels:'Server responds but no models loaded',
   stCheckGPU:'Checking WebGPU...',stGPUOK:'WebGPU available',stGPUOff:'WebGPU unavailable — will use CPU',
@@ -330,7 +324,6 @@ const I18N={
   stFileOnly:'Only .txt and .md files are supported',stEnterEndpoint:'Please enter LM Studio endpoint',
   stExample:'Example inserted — try «Anonymize»',stSelected:'Selected',stLoadLib:'Loading library...',
   stWebGPUFail:'WebGPU failed, trying CPU...',stDownloadStopped:'Download stopped',stDownloadImpossible:'Cannot download from file://',
-  /* misc */
   srcPlaceholder:'Paste text, drag a file or click «Insert example»...',
   resPlaceholder:'Result will appear here...',customPlaceholder:'What to do with the text...',
   labelText:'text',labelTokens:'tokens',labelChars:'chars',labelFromHistory:'from history',
@@ -450,6 +443,7 @@ $('src').addEventListener('input',()=>updSrc());
 $('clearSrc').onclick=()=>{$('src').value='';updSrc();$('src').focus();status('ready')};
 $('exampleBtn').onclick=()=>{$('src').value=LANG==='ru'?EXAMPLE_RU:EXAMPLE_EN;updSrc();$('src').focus();status('stExample','ok');setTimeout(()=>status('ready'),3000)};
 
+const base=()=>($('endpoint').value||'').trim();
 async function checkConn(auto=false){
  const b=base();
  if(!b){status('stEnterEndpoint','warn');return}
@@ -688,8 +682,9 @@ $('histList').onclick=e=>{const el=e.target.closest('.hitem');if(!el||el.dataset
 
 $('exportHist').onclick=()=>{
  const blob=new Blob([JSON.stringify(hist,null,2)],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);
- a.download=`history-${new Date().toISOString().slice(0,10)}.json`;a.click();
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download=`history-${new Date().toISOString().slice(0,10)}.json`;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 $('importHist').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{
